@@ -12,30 +12,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      while (activitySelect.options.length > 1) {
+        activitySelect.remove(1);
+      }
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft =
-          details.max_participants - details.participants.length;
-
-        // Create participants HTML with delete icons instead of bullet points
-        const participantsHTML =
-          details.participants.length > 0
-            ? `<div class="participants-section">
-              <h5>Participants:</h5>
-              <ul class="participants-list">
-                ${details.participants
-                  .map(
-                    (email) =>
-                      `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}">❌</button></li>`
-                  )
-                  .join("")}
-              </ul>
-            </div>`
-            : `<p><em>No participants yet</em></p>`;
+        const spotsLeft = Math.max(
+          0,
+          details.max_participants - details.participants.length
+        );
+        const renderRoster = (emails, heading, emptyMessage) => `
+          <div class="participants-section">
+            <h5>${heading} (${emails.length})</h5>
+            ${
+              emails.length > 0
+                ? `<ul class="participants-list">
+                    ${emails
+                      .map(
+                        (email) =>
+                          `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}" aria-label="Remove ${email} from ${name}" title="Remove ${email}">❌</button></li>`
+                      )
+                      .join("")}
+                  </ul>`
+                : `<p><em>${emptyMessage}</em></p>`
+            }
+          </div>`;
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
@@ -43,7 +48,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
           <div class="participants-container">
-            ${participantsHTML}
+            ${renderRoster(
+              details.participants,
+              "Confirmed participants",
+              "No confirmed participants"
+            )}
+            ${renderRoster(
+              details.waitlist,
+              "Waitlist",
+              "No students on the waitlist"
+            )}
           </div>
         `;
 
